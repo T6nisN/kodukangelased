@@ -28,11 +28,17 @@ jobs:
       - run: npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          # Without keys the app silently becomes the demo — fail instead.
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY missing (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+          npm run build
         env:
-          # Repository → Settings → Secrets and variables → Actions → Variables
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          # Repository → Settings → Secrets and variables → Actions (Secrets or Variables tab)
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
           # Project pages live under /<repo-name>/
           BASE_PATH: /${{ github.event.repository.name }}/
 
